@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>커피숍 POS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#9a6b2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="커피POS">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#ffffff;--surface:#f5f3f0;--surface2:#eeebe6;--surface3:#e0dbd4;
+  --accent:#9a6b2e;--accent2:#7a5420;--accent-dim:#b8956a;
+  --text:#1a1714;--text2:#5c5347;--text3:#8a8078;
+  --green:#3d8b40;--red:#c45a4a;
+  --radius:14px;
+}
+html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+.app{display:flex;flex-direction:column;height:100dvh;max-width:500px;margin:0 auto;position:relative}
+.header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--surface2)}
+.header h1{font-family:'Space Mono',monospace;font-size:18px;color:var(--accent);letter-spacing:-0.5px}
+.admin-btn{background:none;border:2px solid var(--surface3);color:var(--text3);font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:4px}
+.admin-btn:active{border-color:var(--accent);color:var(--accent)}
+.tabs{display:flex;padding:8px 16px 0;gap:6px}
+.tab{flex:1;padding:10px;border:none;background:var(--surface);color:var(--text3);font-size:13px;font-weight:500;border-radius:var(--radius) var(--radius) 0 0;cursor:pointer;font-family:inherit;transition:.2s}
+.tab.active{background:var(--surface2);color:var(--accent)}
+.menu-area{flex:1;overflow-y:auto;padding:0 16px 8px;background:var(--surface2);scrollbar-width:thin;scrollbar-color:var(--surface3) transparent}
+.cat-label{font-size:11px;font-weight:700;color:var(--accent-dim);text-transform:uppercase;letter-spacing:1px;padding:12px 0 6px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-item{background:var(--surface);border:2px solid transparent;border-radius:var(--radius);padding:14px 12px;cursor:pointer;transition:.15s;position:relative;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.menu-item:active{transform:scale(.96)}
+.menu-item.selected{border-color:var(--accent);background:var(--surface3)}
+.menu-item .name{font-size:14px;font-weight:500;margin-bottom:2px}
+.menu-item .price{font-size:13px;color:var(--accent2);font-weight:700}
+.menu-item .badge{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:900;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.order-bar{padding:10px 16px;background:var(--surface);border-top:1px solid var(--surface3)}
+.order-items{max-height:80px;overflow-y:auto;margin-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--surface3) transparent}
+.order-line{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text2);padding:2px 0}
+.order-line .ol-name{flex:1}
+.order-line .ol-qty{color:var(--accent);margin:0 8px;font-weight:700}
+.order-line .ol-price{font-weight:500;min-width:60px;text-align:right}
+.order-line .ol-remove{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:0 0 0 8px;line-height:1}
+.ol-tumbler{background:none;border:2px solid var(--surface3);border-radius:6px;font-size:14px;cursor:pointer;padding:2px 4px;margin-right:6px;opacity:.4;transition:.15s;line-height:1}
+.ol-tumbler.on{opacity:1;border-color:var(--green);background:rgba(61,139,64,.1)}
+.tum-tag{font-size:10px;color:var(--green);font-weight:700;background:rgba(61,139,64,.1);padding:1px 5px;border-radius:4px;margin-left:4px}
+.order-total{display:flex;justify-content:space-between;font-size:16px;font-weight:700;padding-top:6px;border-top:1px solid var(--surface3)}
+.order-total .amount{color:var(--accent2)}
+.discount-note{font-size:11px;color:var(--green);text-align:right;padding-top:2px}
+.pay-btn{width:100%;padding:14px;border:none;background:var(--accent);color:#fff;font-size:16px;font-weight:900;border-radius:var(--radius);cursor:pointer;font-family:inherit;margin-top:8px;transition:.15s;letter-spacing:0.5px}
+.pay-btn:active{transform:scale(.97)}
+.pay-btn:disabled{opacity:.3;cursor:default;transform:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:100;animation:fadeIn .2s}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px 20px 30px;animation:slideUp .25s}
+.modal.full{border-radius:0;height:100dvh;display:flex;flex-direction:column}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h2{font-size:16px;text-align:center;margin-bottom:16px;color:var(--accent)}
+.pay-methods{display:flex;gap:8px;margin-bottom:16px}
+.pay-method{flex:1;padding:12px;border:2px solid var(--surface3);background:var(--surface2);border-radius:var(--radius);cursor:pointer;text-align:center;font-size:13px;font-weight:500;color:var(--text2);font-family:inherit;transition:.15s}
+.pay-method.active{border-color:var(--accent);color:var(--accent)}
+.pay-summary{background:var(--surface2);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+.pay-row{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;color:var(--text2)}
+.pay-row.total{font-size:18px;font-weight:900;color:var(--text);padding-top:8px;margin-top:6px;border-top:1px solid var(--surface3)}
+.pay-row.change{color:var(--green);font-weight:700;font-size:16px}
+.cash-input-area{margin-bottom:16px}
+.cash-input-area label{font-size:12px;color:var(--text3);display:block;margin-bottom:6px}
+.cash-display{font-size:28px;font-weight:900;color:var(--text);text-align:right;padding:10px 14px;background:var(--surface2);border-radius:var(--radius);margin-bottom:10px;min-height:52px;display:flex;align-items:center;justify-content:flex-end;letter-spacing:1px}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.numpad button{padding:14px;border:none;background:var(--surface2);color:var(--text);font-size:18px;font-weight:700;border-radius:var(--radius);cursor:pointer;font-family:inherit;transition:.1s}
+.numpad button:active{background:var(--surface3);transform:scale(.95)}
+.numpad button.clear{color:var(--red)}
+.numpad button.quick{background:var(--surface3);color:var(--accent2);font-size:13px}
+.confirm-btn{width:100%;padding:16px;border:none;border-radius:var(--radius);font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:10px;transition:.15s;letter-spacing:0.5px}
+.confirm-btn:active{transform:scale(.97)}
+.confirm-btn.ready{background:var(--green);color:#fff}
+.confirm-btn.not-ready{background:var(--surface3);color:var(--text3);cursor:default}
+.confirm-btn.transfer{background:var(--accent);color:#fff}
+.receipt{text-align:center;padding:30px 20px}
+.receipt svg{width:60px;height:60px;color:var(--green);margin-bottom:12px}
+.receipt h2{font-size:20px;margin-bottom:4px}
+.receipt .bell-big{font-family:'Space Mono',monospace;font-size:48px;color:var(--accent);margin:16px 0}
+.receipt .receipt-info{font-size:13px;color:var(--text2);line-height:1.8}
+.receipt .receipt-info strong{color:var(--text)}
+.receipt .done-btn{margin-top:20px;width:100%;padding:16px;border:none;background:var(--accent);color:#fff;font-size:16px;font-weight:900;border-radius:var(--radius);cursor:pointer;font-family:inherit}
+.empty-order{text-align:center;padding:20px;color:var(--text3);font-size:13px}
+.bell-grid-wrap{flex:1;overflow-y:auto;padding:8px 0;scrollbar-width:thin;scrollbar-color:var(--surface3) transparent}
+.bell-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bell-cell{padding:14px 0;border:2px solid var(--surface3);background:var(--surface2);border-radius:10px;font-size:18px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;transition:.12s}
+.bell-cell:active{transform:scale(.92);background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Admin */
+.admin-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--surface3);padding-bottom:12px;margin-bottom:12px}
+.admin-header h2{margin:0}
+.admin-close{background:none;border:none;font-size:28px;color:var(--text3);cursor:pointer;line-height:1}
+.admin-date{display:flex;align-items:center;gap:8px;justify-content:center;flex-shrink:0;margin-bottom:12px}
+.admin-date button{background:var(--surface2);border:2px solid var(--surface3);color:var(--text2);font-size:16px;width:36px;height:36px;border-radius:50%;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.admin-date button:active{background:var(--surface3)}
+.admin-date span{font-size:15px;font-weight:700;min-width:130px;text-align:center}
+.admin-tabs{display:flex;gap:6px;flex-shrink:0;margin-bottom:12px}
+.admin-tab{flex:1;padding:10px;border:none;background:var(--surface2);color:var(--text3);font-size:13px;font-weight:600;border-radius:var(--radius);cursor:pointer;font-family:inherit;transition:.15s}
+.admin-tab.active{background:var(--accent);color:#fff}
+.admin-body{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--surface3) transparent}
+.summary-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;flex-shrink:0}
+.s-card{background:var(--surface2);border-radius:var(--radius);padding:14px;text-align:center}
+.s-card .s-label{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px}
+.s-card .s-value{font-size:20px;font-weight:900;color:var(--accent)}
+.s-card .s-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.hist-item{background:var(--surface2);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.hist-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.hist-bell{font-family:'Space Mono',monospace;font-weight:900;color:var(--accent);font-size:15px}
+.hist-time{font-size:11px;color:var(--text3)}
+.hist-items{font-size:12px;color:var(--text2);line-height:1.6}
+.hist-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--surface3)}
+.hist-method{font-size:11px;color:var(--text3);background:var(--surface3);padding:2px 8px;border-radius:10px}
+.hist-total{font-size:14px;font-weight:900;color:var(--text)}
+.hist-tumbler{font-size:11px;color:var(--green);margin-top:4px}
+.hour-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px}
+.hour-label{min-width:36px;text-align:right;color:var(--text3);font-weight:600;font-size:11px}
+.hour-bar-wrap{flex:1;height:22px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.hour-bar{height:100%;background:var(--accent);border-radius:6px;transition:width .3s}
+.hour-val{min-width:58px;text-align:right;font-weight:700;font-size:11px;color:var(--text2)}
+.hour-cnt{min-width:28px;text-align:right;font-size:11px;color:var(--text3)}
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface2)}
+.rank-num{font-size:14px;font-weight:900;color:var(--accent);min-width:22px;text-align:center}
+.rank-name{flex:1;font-size:13px;font-weight:500}
+.rank-qty{font-size:12px;color:var(--text3);font-weight:600}
+.rank-amount{font-size:13px;font-weight:700;min-width:70px;text-align:right}
+.no-data{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const MENU = {
+  '커피':[{name:'아메리카노',price:3000},{name:'카페라떼',price:3500},{name:'바닐라라떼',price:4000},{name:'카푸치노',price:3500},{name:'카라멜 마끼아또',price:4500},{name:'에스프레소',price:2500}],
+  '논커피':[{name:'초코라떼',price:4000},{name:'녹차라떼',price:4000},{name:'고구마라떼',price:4000},{name:'딸기라떼',price:4500}],
+  '차':[{name:'유자차',price:3500},{name:'레몬차',price:3500},{name:'캐모마일',price:3000},{name:'페퍼민트',price:3000}],
+  '음료':[{name:'스무디(딸기)',price:4500},{name:'스무디(망고)',price:4500},{name:'에이드(레몬)',price:4000},{name:'에이드(자몽)',price:4000}]
+};
+const TUMBLER_DISCOUNT=300;
+
+function loadHistory(){try{return JSON.parse(localStorage.getItem('pos_orders')||'[]')}catch{return[]}}
+function saveOrder(order){const h=loadHistory();h.push(order);localStorage.setItem('pos_orders',JSON.stringify(h))}
+function getOrdersForDate(ds){return loadHistory().filter(o=>o.date===ds)}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function dateLabel(ds){const d=new Date(ds+'T00:00:00');const w=['일','월','화','수','목','금','토'];return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w[d.getDay()]})`}
+
+let state={tab:'커피',cart:[],showPay:false,showBellPicker:false,payMethod:'현금',cashInput:'',showReceipt:false,lastOrder:null,showAdmin:false,adminDate:todayStr(),adminTab:'주문내역'};
+
+function addToCart(item){const e=state.cart.find(c=>c.name===item.name&&!c.tumbler);if(e)e.qty++;else state.cart.push({...item,qty:1,tumbler:false});render()}
+function removeFromCart(idx){if(state.cart[idx].qty>1)state.cart[idx].qty--;else state.cart.splice(idx,1);render()}
+function toggleTumbler(idx){
+  const item=state.cart[idx];
+  if(item.tumbler){item.tumbler=false;const m=state.cart.find((c,i)=>i!==idx&&c.name===item.name&&!c.tumbler);if(m){m.qty+=item.qty;state.cart.splice(idx,1)}}
+  else{if(item.qty>1){item.qty--;state.cart.push({name:item.name,price:item.price,qty:1,tumbler:true})}else{item.tumbler=true}}
+  render();
+}
+function tumblerCount(){return state.cart.filter(c=>c.tumbler).length}
+function hasTumbler(){return state.cart.some(c=>c.tumbler)}
+function getTotal(){let s=state.cart.reduce((a,c)=>a+c.price*c.qty,0);s-=tumblerCount()*TUMBLER_DISCOUNT;return Math.max(0,s)}
+function getQty(name){return state.cart.filter(c=>c.name===name).reduce((a,c)=>a+c.qty,0)}
+function fmt(n){return n.toLocaleString('ko-KR')}
+
+function completeOrder(){
+  const total=getTotal(),received=state.payMethod==='현금'?parseInt(state.cashInput)||0:total;
+  state.lastOrder={bell:null,total,received,change:received-total,method:state.payMethod,tumblerItems:state.cart.filter(c=>c.tumbler),tumblerCnt:tumblerCount(),items:[...state.cart]};
+  state.cart=[];state.showPay=false;state.cashInput='';state.showBellPicker=true;render();
+}
+function selectBell(num){
+  const o=state.lastOrder;o.bell=num;
+  const now=new Date();
+  saveOrder({date:todayStr(),time:now.toTimeString().slice(0,5),hour:now.getHours(),bell:num,items:o.items.map(c=>({name:c.name,qty:c.qty,price:c.price,tumbler:c.tumbler})),tumblerCnt:o.tumblerCnt,total:o.total,method:o.method,received:o.received,change:o.change});
+  state.showBellPicker=false;state.showReceipt=true;render();
+}
+function shiftAdminDate(dir){const d=new Date(state.adminDate+'T00:00:00');d.setDate(d.getDate()+dir);state.adminDate=d.toISOString().slice(0,10);render()}
+
+function calcStats(orders){
+  const totalSales=orders.reduce((a,o)=>a+o.total,0);
+  const totalCups=orders.reduce((a,o)=>a+o.items.reduce((b,i)=>b+i.qty,0),0);
+  const cashTotal=orders.filter(o=>o.method==='현금').reduce((a,o)=>a+o.total,0);
+  const transferTotal=orders.filter(o=>o.method==='계좌이체').reduce((a,o)=>a+o.total,0);
+  const tumblerTotal=orders.reduce((a,o)=>a+o.tumblerCnt,0);
+  const hourly={};for(let h=0;h<24;h++)hourly[h]={cnt:0,amount:0};
+  orders.forEach(o=>{hourly[o.hour].cnt++;hourly[o.hour].amount+=o.total});
+  const mm={};
+  orders.forEach(o=>o.items.forEach(i=>{if(!mm[i.name])mm[i.name]={qty:0,amount:0};mm[i.name].qty+=i.qty;mm[i.name].amount+=i.price*i.qty-(i.tumbler?TUMBLER_DISCOUNT:0)}));
+  const menuRank=Object.entries(mm).map(([name,v])=>({name,...v})).sort((a,b)=>b.qty-a.qty);
+  return{totalSales,totalCups,orderCount:orders.length,cashTotal,transferTotal,tumblerTotal,hourly,menuRank};
+}
+
+function render(){
+  const total=getTotal(),cashVal=parseInt(state.cashInput)||0,change=cashVal-total,canCC=cashVal>=total&&total>0;
+  let html=`
+    <div class="header">
+      <h1>☕ COFFEE POS</h1>
+      <button class="admin-btn" onclick="state.showAdmin=true;state.adminDate=todayStr();state.adminTab='주문내역';render()">📊 관리자</button>
+    </div>
+    <div class="tabs">${Object.keys(MENU).map(cat=>`<button class="tab ${state.tab===cat?'active':''}" onclick="state.tab='${cat}';render()">${cat}</button>`).join('')}</div>
+    <div class="menu-area">
+      <div class="cat-label">${state.tab}</div>
+      <div class="menu-grid">${MENU[state.tab].map(item=>{const q=getQty(item.name);return`<div class="menu-item ${q?'selected':''}" onclick='addToCart(${JSON.stringify(item)})'><div class="name">${item.name}</div><div class="price">${fmt(item.price)}원</div>${q?`<div class="badge">${q}</div>`:''}</div>`}).join('')}</div>
+    </div>
+    <div class="order-bar">
+      ${state.cart.length===0?`<div class="empty-order">메뉴를 선택해주세요</div>`:`
+        <div class="order-items">${state.cart.map((c,i)=>`<div class="order-line"><button class="ol-tumbler ${c.tumbler?'on':''}" onclick="toggleTumbler(${i})">🥤</button><span class="ol-name">${c.name}${c.tumbler?' <span class="tum-tag">텀블러</span>':''}</span><span class="ol-qty">×${c.qty}</span><span class="ol-price">${fmt(c.tumbler?c.price*c.qty-TUMBLER_DISCOUNT:c.price*c.qty)}원</span><button class="ol-remove" onclick="removeFromCart(${i})">✕</button></div>`).join('')}</div>
+        <div class="order-total"><span>합계</span><span class="amount">${fmt(total)}원</span></div>
+        ${hasTumbler()?`<div class="discount-note">🥤 텀블러 ${tumblerCount()}잔 × −${fmt(TUMBLER_DISCOUNT)}원 = −${fmt(tumblerCount()*TUMBLER_DISCOUNT)}원</div>`:''}`}
+      <button class="pay-btn" ${state.cart.length===0?'disabled':''} onclick="state.showPay=true;state.cashInput='';state.payMethod='현금';render()">결제하기</button>
+    </div>`;
+
+  if(state.showPay){html+=`
+    <div class="modal-overlay" onclick="if(event.target===this){state.showPay=false;render()}"><div class="modal"><h2>결제</h2>
+      <div class="pay-methods"><button class="pay-method ${state.payMethod==='현금'?'active':''}" onclick="state.payMethod='현금';state.cashInput='';render()">💵 현금</button><button class="pay-method ${state.payMethod==='계좌이체'?'active':''}" onclick="state.payMethod='계좌이체';render()">🏦 계좌이체</button></div>
+      <div class="pay-summary">
+        ${state.cart.map(c=>`<div class="pay-row"><span>${c.name} ×${c.qty}${c.tumbler?' 🥤':''}</span><span>${fmt(c.tumbler?c.price*c.qty-TUMBLER_DISCOUNT:c.price*c.qty)}원</span></div>`).join('')}
+        ${hasTumbler()?`<div class="pay-row" style="color:var(--green)"><span>텀블러 할인 (${tumblerCount()}잔)</span><span>−${fmt(tumblerCount()*TUMBLER_DISCOUNT)}원</span></div>`:''}
+        <div class="pay-row total"><span>총 결제금액</span><span>${fmt(total)}원</span></div>
+        ${state.payMethod==='현금'&&state.cashInput?`<div class="pay-row change"><span>거스름돈</span><span>${change>=0?fmt(change)+'원':'부족'}</span></div>`:''}
+      </div>
+      ${state.payMethod==='현금'?`
+        <div class="cash-input-area"><label>받은 금액</label>
+          <div class="cash-display">${state.cashInput?fmt(parseInt(state.cashInput))+'원':'0원'}</div>
+          <div class="numpad">
+            <button class="quick" onclick="state.cashInput='${total}';render()">딱 맞게</button>
+            <button class="quick" onclick="state.cashInput='${Math.ceil(total/1000)*1000}';render()">${fmt(Math.ceil(total/1000)*1000)}</button>
+            <button class="quick" onclick="state.cashInput='${Math.ceil(total/5000)*5000}';render()">${fmt(Math.ceil(total/5000)*5000)}</button>
+            ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="state.cashInput+='${n}';render()">${n}</button>`).join('')}
+            <button class="clear" onclick="state.cashInput='';render()">C</button>
+            <button onclick="state.cashInput+='0';render()">0</button>
+            <button onclick="state.cashInput=state.cashInput.slice(0,-1);render()">⌫</button>
+          </div>
+        </div>
+        <button class="confirm-btn ${canCC?'ready':'not-ready'}" ${canCC?'':'disabled'} onclick="if(${canCC})completeOrder()">${canCC?'결제 완료':'금액을 입력하세요'}</button>
+      `:`<button class="confirm-btn transfer" onclick="completeOrder()">계좌이체 확인 완료</button>`}
+    </div></div>`}
+
+  if(state.showBellPicker){html+=`
+    <div class="modal-overlay"><div class="modal" style="max-height:90dvh;display:flex;flex-direction:column">
+      <h2 style="flex-shrink:0">🔔 진동벨 번호 선택</h2>
+      <div class="bell-grid-wrap"><div class="bell-grid">${Array.from({length:99},(_,i)=>i+1).map(n=>`<button class="bell-cell" onclick="selectBell(${n})">${n}</button>`).join('')}</div></div>
+    </div></div>`}
+
+  if(state.showReceipt&&state.lastOrder){const o=state.lastOrder;html+=`
+    <div class="modal-overlay"><div class="modal"><div class="receipt">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <h2>주문 완료!</h2><div class="bell-big">#${String(o.bell).padStart(2,'0')}</div>
+      <div class="receipt-info">
+        ${o.items.map(c=>`${c.name} ×${c.qty}${c.tumbler?' 🥤':''}`).join(' / ')}<br>
+        ${o.tumblerCnt>0?`🥤 텀블러 ${o.tumblerCnt}잔 (${o.tumblerItems.map(c=>c.name).join(', ')}) −${fmt(o.tumblerCnt*TUMBLER_DISCOUNT)}원<br>`:''}
+        결제: <strong>${o.method}</strong><br>금액: <strong>${fmt(o.total)}원</strong>
+        ${o.method==='현금'?`<br>받은 금액: ${fmt(o.received)}원 → 거스름돈: <strong>${fmt(o.change)}원</strong>`:''}
+      </div>
+      <button class="done-btn" onclick="state.showReceipt=false;state.lastOrder=null;render()">다음 주문</button>
+    </div></div></div>`}
+
+  // ===== ADMIN PANEL =====
+  if(state.showAdmin){
+    const orders=getOrdersForDate(state.adminDate),st=calcStats(orders);
+    const maxH=Math.max(...Object.values(st.hourly).map(h=>h.amount),1);
+    html+=`
+    <div class="modal-overlay" style="align-items:stretch"><div class="modal full">
+      <div class="admin-header"><h2>📊 매출 관리</h2><button class="admin-close" onclick="state.showAdmin=false;render()">✕</button></div>
+      <div class="admin-date">
+        <button onclick="shiftAdminDate(-1)">◀</button>
+        <span>${dateLabel(state.adminDate)}${state.adminDate===todayStr()?' (오늘)':''}</span>
+        <button onclick="shiftAdminDate(1)" ${state.adminDate>=todayStr()?'disabled style="opacity:.3"':''}>▶</button>
+      </div>
+      <div class="summary-cards">
+        <div class="s-card"><div class="s-label">총 매출</div><div class="s-value">${fmt(st.totalSales)}원</div><div class="s-sub">${st.orderCount}건</div></div>
+        <div class="s-card"><div class="s-label">총 잔수</div><div class="s-value">${st.totalCups}잔</div><div class="s-sub">텀블러 ${st.tumblerTotal}건</div></div>
+        <div class="s-card"><div class="s-label">💵 현금</div><div class="s-value" style="font-size:16px">${fmt(st.cashTotal)}원</div></div>
+        <div class="s-card"><div class="s-label">🏦 계좌이체</div><div class="s-value" style="font-size:16px">${fmt(st.transferTotal)}원</div></div>
+      </div>
+      <div class="admin-tabs">${['주문내역','시간대별','메뉴별'].map(t=>`<button class="admin-tab ${state.adminTab===t?'active':''}" onclick="state.adminTab='${t}';render()">${t}</button>`).join('')}</div>
+      <div class="admin-body">
+      ${state.adminTab==='주문내역'?(orders.length===0?'<div class="no-data">주문 내역이 없습니다.</div>':`${[...orders].reverse().map(o=>`<div class="hist-item"><div class="hist-top"><span class="hist-bell">🔔 #${String(o.bell).padStart(2,'0')}</span><span class="hist-time">${o.time}</span></div><div class="hist-items">${o.items.map(i=>`${i.name} ×${i.qty}${i.tumbler?' 🥤':''}`).join(', ')}</div>${o.tumblerCnt>0?`<div class="hist-tumbler">🥤 텀블러 ${o.tumblerCnt}잔 −${fmt(o.tumblerCnt*TUMBLER_DISCOUNT)}원</div>`:''}<div class="hist-bottom"><span class="hist-method">${o.method==='현금'?'💵':'🏦'} ${o.method}</span><span class="hist-total">${fmt(o.total)}원</span></div></div>`).join('')}`):''}
+      ${state.adminTab==='시간대별'?(orders.length===0?'<div class="no-data">데이터가 없습니다.</div>':`${Object.entries(st.hourly).filter(([,v])=>v.cnt>0).map(([h,v])=>`<div class="hour-row"><span class="hour-label">${String(h).padStart(2,'0')}시</span><div class="hour-bar-wrap"><div class="hour-bar" style="width:${(v.amount/maxH*100).toFixed(1)}%"></div></div><span class="hour-cnt">${v.cnt}건</span><span class="hour-val">${fmt(v.amount)}원</span></div>`).join('')}`):''}
+      ${state.adminTab==='메뉴별'?(st.menuRank.length===0?'<div class="no-data">데이터가 없습니다.</div>':`${st.menuRank.map((m,i)=>`<div class="rank-row"><span class="rank-num">${i+1}</span><span class="rank-name">${m.name}</span><span class="rank-qty">${m.qty}잔</span><span class="rank-amount">${fmt(m.amount)}원</span></div>`).join('')}`):''}
+      </div>
+    </div></div>`;
+  }
+
+  document.getElementById('app').innerHTML=html;
+}
+render();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
