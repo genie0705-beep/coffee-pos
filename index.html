@@ -11,19 +11,19 @@
 <meta name="apple-mobile-web-app-title" content="커피POS">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#ffffff;--surface:#f5f3f0;--surface2:#eeebe6;--surface3:#e0dbd4;
-  --accent:#9a6b2e;--accent2:#7a5420;--accent-dim:#b8956a;
-  --text:#1a1714;--text2:#5c5347;--text3:#8a8078;
-  --green:#3d8b40;--red:#c45a4a;
-  --radius:14px;
-}
+:root{--bg:#fff;--surface:#f5f3f0;--surface2:#eeebe6;--surface3:#e0dbd4;--accent:#9a6b2e;--accent2:#7a5420;--accent-dim:#b8956a;--text:#1a1714;--text2:#5c5347;--text3:#8a8078;--green:#3d8b40;--red:#c45a4a;--radius:14px}
 html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
 .app{display:flex;flex-direction:column;height:100dvh;max-width:500px;margin:0 auto;position:relative}
 .header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--surface2)}
-.header h1{font-family:'Space Mono',monospace;font-size:18px;color:var(--accent);letter-spacing:-0.5px}
+.header h1{font-family:'Space Mono',monospace;font-size:18px;color:var(--accent);letter-spacing:-.5px}
+.header-right{display:flex;align-items:center;gap:6px}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-dot.online{background:var(--green)}
+.sync-dot.offline{background:var(--red)}
 .admin-btn{background:none;border:2px solid var(--surface3);color:var(--text3);font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:4px}
 .admin-btn:active{border-color:var(--accent);color:var(--accent)}
 .tabs{display:flex;padding:8px 16px 0;gap:6px}
@@ -51,9 +51,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
 .order-total{display:flex;justify-content:space-between;font-size:16px;font-weight:700;padding-top:6px;border-top:1px solid var(--surface3)}
 .order-total .amount{color:var(--accent2)}
 .discount-note{font-size:11px;color:var(--green);text-align:right;padding-top:2px}
-.pay-btn{width:100%;padding:14px;border:none;background:var(--accent);color:#fff;font-size:16px;font-weight:900;border-radius:var(--radius);cursor:pointer;font-family:inherit;margin-top:8px;transition:.15s;letter-spacing:0.5px}
-.pay-btn:active{transform:scale(.97)}
-.pay-btn:disabled{opacity:.3;cursor:default;transform:none}
+.pay-btn{width:100%;padding:14px;border:none;background:var(--accent);color:#fff;font-size:16px;font-weight:900;border-radius:var(--radius);cursor:pointer;font-family:inherit;margin-top:8px;transition:.15s;letter-spacing:.5px}
+.pay-btn:active{transform:scale(.97)}.pay-btn:disabled{opacity:.3;cursor:default;transform:none}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:100;animation:fadeIn .2s}
 .modal{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px 20px 30px;animation:slideUp .25s}
 .modal.full{border-radius:0;height:100dvh;display:flex;flex-direction:column}
@@ -75,7 +74,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
 .numpad button:active{background:var(--surface3);transform:scale(.95)}
 .numpad button.clear{color:var(--red)}
 .numpad button.quick{background:var(--surface3);color:var(--accent2);font-size:13px}
-.confirm-btn{width:100%;padding:16px;border:none;border-radius:var(--radius);font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:10px;transition:.15s;letter-spacing:0.5px}
+.confirm-btn{width:100%;padding:16px;border:none;border-radius:var(--radius);font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:10px;transition:.15s;letter-spacing:.5px}
 .confirm-btn:active{transform:scale(.97)}
 .confirm-btn.ready{background:var(--green);color:#fff}
 .confirm-btn.not-ready{background:var(--surface3);color:var(--text3);cursor:default}
@@ -92,8 +91,6 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
 .bell-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .bell-cell{padding:14px 0;border:2px solid var(--surface3);background:var(--surface2);border-radius:10px;font-size:18px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;transition:.12s}
 .bell-cell:active{transform:scale(.92);background:var(--accent);color:#fff;border-color:var(--accent)}
-
-/* Admin */
 .admin-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--surface3);padding-bottom:12px;margin-bottom:12px}
 .admin-header h2{margin:0}
 .admin-close{background:none;border:none;font-size:28px;color:var(--text3);cursor:pointer;line-height:1}
@@ -131,159 +128,99 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
 .rank-qty{font-size:12px;color:var(--text3);font-weight:600}
 .rank-amount{font-size:13px;font-weight:700;min-width:70px;text-align:right}
 .no-data{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+.loading{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
 </style>
 </head>
 <body>
 <div class="app" id="app"></div>
 <script>
-const MENU = {
-  '커피':[{name:'아메리카노',price:3000},{name:'카페라떼',price:3500},{name:'바닐라라떼',price:4000},{name:'카푸치노',price:3500},{name:'카라멜 마끼아또',price:4500},{name:'에스프레소',price:2500}],
-  '논커피':[{name:'초코라떼',price:4000},{name:'녹차라떼',price:4000},{name:'고구마라떼',price:4000},{name:'딸기라떼',price:4500}],
-  '차':[{name:'유자차',price:3500},{name:'레몬차',price:3500},{name:'캐모마일',price:3000},{name:'페퍼민트',price:3000}],
-  '음료':[{name:'스무디(딸기)',price:4500},{name:'스무디(망고)',price:4500},{name:'에이드(레몬)',price:4000},{name:'에이드(자몽)',price:4000}]
+// ============================================================
+// ★★★ Firebase 설정 - 본인 Firebase 프로젝트 값으로 교체 ★★★
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "여기에-apiKey-입력",
+  authDomain: "여기에-프로젝트ID.firebaseapp.com",
+  databaseURL: "https://여기에-프로젝트ID-default-rtdb.firebaseio.com",
+  projectId: "여기에-프로젝트ID-입력",
+  storageBucket: "여기에-프로젝트ID.appspot.com",
+  messagingSenderId: "여기에-숫자",
+  appId: "여기에-appId-입력"
 };
+// ============================================================
+
+let db=null,firebaseReady=false;
+try{if(FIREBASE_CONFIG.apiKey!=="여기에-apiKey-입력"){firebase.initializeApp(FIREBASE_CONFIG);db=firebase.database();firebaseReady=true}}catch(e){console.warn('Firebase 초기화 실패',e)}
+
+function saveOrder(order){
+  const h=loadLocal();h.push(order);localStorage.setItem('pos_orders',JSON.stringify(h));
+  if(firebaseReady&&db)db.ref('orders/'+order.date).push(order).catch(()=>{});
+}
+function loadLocal(){try{return JSON.parse(localStorage.getItem('pos_orders')||'[]')}catch{return[]}}
+function loadOrdersForDate(ds,cb){
+  if(firebaseReady&&db){db.ref('orders/'+ds).once('value').then(s=>{const d=s.val();cb(d?Object.values(d):[])}).catch(()=>cb(loadLocal().filter(o=>o.date===ds)))}
+  else cb(loadLocal().filter(o=>o.date===ds));
+}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function dateLabel(ds){const d=new Date(ds+'T00:00:00'),w=['일','월','화','수','목','금','토'];return`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w[d.getDay()]})`}
+
+const MENU={'커피':[{name:'아메리카노',price:3000},{name:'카페라떼',price:3500},{name:'바닐라라떼',price:4000},{name:'카푸치노',price:3500},{name:'카라멜 마끼아또',price:4500},{name:'에스프레소',price:2500}],'논커피':[{name:'초코라떼',price:4000},{name:'녹차라떼',price:4000},{name:'고구마라떼',price:4000},{name:'딸기라떼',price:4500}],'차':[{name:'유자차',price:3500},{name:'레몬차',price:3500},{name:'캐모마일',price:3000},{name:'페퍼민트',price:3000}],'음료':[{name:'스무디(딸기)',price:4500},{name:'스무디(망고)',price:4500},{name:'에이드(레몬)',price:4000},{name:'에이드(자몽)',price:4000}]};
 const TUMBLER_DISCOUNT=300;
 
-function loadHistory(){try{return JSON.parse(localStorage.getItem('pos_orders')||'[]')}catch{return[]}}
-function saveOrder(order){const h=loadHistory();h.push(order);localStorage.setItem('pos_orders',JSON.stringify(h))}
-function getOrdersForDate(ds){return loadHistory().filter(o=>o.date===ds)}
-function todayStr(){return new Date().toISOString().slice(0,10)}
-function dateLabel(ds){const d=new Date(ds+'T00:00:00');const w=['일','월','화','수','목','금','토'];return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w[d.getDay()]})`}
-
-let state={tab:'커피',cart:[],showPay:false,showBellPicker:false,payMethod:'현금',cashInput:'',showReceipt:false,lastOrder:null,showAdmin:false,adminDate:todayStr(),adminTab:'주문내역'};
+let state={tab:'커피',cart:[],showPay:false,showBellPicker:false,payMethod:'현금',cashInput:'',showReceipt:false,lastOrder:null,showAdmin:false,adminDate:todayStr(),adminTab:'주문내역',adminOrders:null,adminLoading:false};
 
 function addToCart(item){const e=state.cart.find(c=>c.name===item.name&&!c.tumbler);if(e)e.qty++;else state.cart.push({...item,qty:1,tumbler:false});render()}
 function removeFromCart(idx){if(state.cart[idx].qty>1)state.cart[idx].qty--;else state.cart.splice(idx,1);render()}
-function toggleTumbler(idx){
-  const item=state.cart[idx];
-  if(item.tumbler){item.tumbler=false;const m=state.cart.find((c,i)=>i!==idx&&c.name===item.name&&!c.tumbler);if(m){m.qty+=item.qty;state.cart.splice(idx,1)}}
-  else{if(item.qty>1){item.qty--;state.cart.push({name:item.name,price:item.price,qty:1,tumbler:true})}else{item.tumbler=true}}
-  render();
-}
+function toggleTumbler(idx){const item=state.cart[idx];if(item.tumbler){item.tumbler=false;const m=state.cart.find((c,i)=>i!==idx&&c.name===item.name&&!c.tumbler);if(m){m.qty+=item.qty;state.cart.splice(idx,1)}}else{if(item.qty>1){item.qty--;state.cart.push({name:item.name,price:item.price,qty:1,tumbler:true})}else{item.tumbler=true}}render()}
 function tumblerCount(){return state.cart.filter(c=>c.tumbler).length}
 function hasTumbler(){return state.cart.some(c=>c.tumbler)}
 function getTotal(){let s=state.cart.reduce((a,c)=>a+c.price*c.qty,0);s-=tumblerCount()*TUMBLER_DISCOUNT;return Math.max(0,s)}
 function getQty(name){return state.cart.filter(c=>c.name===name).reduce((a,c)=>a+c.qty,0)}
 function fmt(n){return n.toLocaleString('ko-KR')}
 
-function completeOrder(){
-  const total=getTotal(),received=state.payMethod==='현금'?parseInt(state.cashInput)||0:total;
-  state.lastOrder={bell:null,total,received,change:received-total,method:state.payMethod,tumblerItems:state.cart.filter(c=>c.tumbler),tumblerCnt:tumblerCount(),items:[...state.cart]};
-  state.cart=[];state.showPay=false;state.cashInput='';state.showBellPicker=true;render();
+function ci(v){state.cashInput=v;updateCash()}
+function updateCash(){
+  const total=getTotal(),cashVal=parseInt(state.cashInput)||0,change=cashVal-total,canCC=cashVal>=total&&total>0;
+  const cd=document.getElementById('cashDisp');if(cd)cd.textContent=state.cashInput?fmt(parseInt(state.cashInput))+'원':'0원';
+  const cr=document.getElementById('changeRow');if(cr)cr.innerHTML=state.payMethod==='현금'&&state.cashInput?`<span>거스름돈</span><span>${change>=0?fmt(change)+'원':'부족'}</span>`:'';
+  const cb=document.getElementById('confirmBtn');if(cb){cb.className='confirm-btn '+(canCC?'ready':'not-ready');cb.disabled=!canCC;cb.textContent=canCC?'결제 완료':'금액을 입력하세요';cb.onclick=canCC?()=>completeOrder():null}
 }
-function selectBell(num){
-  const o=state.lastOrder;o.bell=num;
-  const now=new Date();
-  saveOrder({date:todayStr(),time:now.toTimeString().slice(0,5),hour:now.getHours(),bell:num,items:o.items.map(c=>({name:c.name,qty:c.qty,price:c.price,tumbler:c.tumbler})),tumblerCnt:o.tumblerCnt,total:o.total,method:o.method,received:o.received,change:o.change});
-  state.showBellPicker=false;state.showReceipt=true;render();
-}
-function shiftAdminDate(dir){const d=new Date(state.adminDate+'T00:00:00');d.setDate(d.getDate()+dir);state.adminDate=d.toISOString().slice(0,10);render()}
+
+function completeOrder(){const total=getTotal(),received=state.payMethod==='현금'?parseInt(state.cashInput)||0:total;state.lastOrder={bell:null,total,received,change:received-total,method:state.payMethod,tumblerItems:state.cart.filter(c=>c.tumbler),tumblerCnt:tumblerCount(),items:[...state.cart]};state.cart=[];state.showPay=false;state.cashInput='';state.showBellPicker=true;render()}
+function selectBell(num){const o=state.lastOrder;o.bell=num;const now=new Date();saveOrder({date:todayStr(),time:now.toTimeString().slice(0,5),hour:now.getHours(),bell:num,items:o.items.map(c=>({name:c.name,qty:c.qty,price:c.price,tumbler:c.tumbler})),tumblerCnt:o.tumblerCnt,total:o.total,method:o.method,received:o.received,change:o.change});state.showBellPicker=false;state.showReceipt=true;render()}
+function openAdmin(){state.showAdmin=true;state.adminDate=todayStr();state.adminTab='주문내역';state.adminOrders=null;state.adminLoading=true;render();loadAdminData()}
+function loadAdminData(){state.adminLoading=true;state.adminOrders=null;render();loadOrdersForDate(state.adminDate,orders=>{state.adminOrders=orders;state.adminLoading=false;render()})}
+function shiftAdminDate(dir){const d=new Date(state.adminDate+'T00:00:00');d.setDate(d.getDate()+dir);state.adminDate=d.toISOString().slice(0,10);loadAdminData()}
 
 function calcStats(orders){
-  const totalSales=orders.reduce((a,o)=>a+o.total,0);
-  const totalCups=orders.reduce((a,o)=>a+o.items.reduce((b,i)=>b+i.qty,0),0);
-  const cashTotal=orders.filter(o=>o.method==='현금').reduce((a,o)=>a+o.total,0);
-  const transferTotal=orders.filter(o=>o.method==='계좌이체').reduce((a,o)=>a+o.total,0);
-  const tumblerTotal=orders.reduce((a,o)=>a+o.tumblerCnt,0);
-  const hourly={};for(let h=0;h<24;h++)hourly[h]={cnt:0,amount:0};
-  orders.forEach(o=>{hourly[o.hour].cnt++;hourly[o.hour].amount+=o.total});
-  const mm={};
-  orders.forEach(o=>o.items.forEach(i=>{if(!mm[i.name])mm[i.name]={qty:0,amount:0};mm[i.name].qty+=i.qty;mm[i.name].amount+=i.price*i.qty-(i.tumbler?TUMBLER_DISCOUNT:0)}));
-  const menuRank=Object.entries(mm).map(([name,v])=>({name,...v})).sort((a,b)=>b.qty-a.qty);
-  return{totalSales,totalCups,orderCount:orders.length,cashTotal,transferTotal,tumblerTotal,hourly,menuRank};
+  const totalSales=orders.reduce((a,o)=>a+o.total,0),totalCups=orders.reduce((a,o)=>a+o.items.reduce((b,i)=>b+i.qty,0),0);
+  const cashTotal=orders.filter(o=>o.method==='현금').reduce((a,o)=>a+o.total,0),transferTotal=orders.filter(o=>o.method==='계좌이체').reduce((a,o)=>a+o.total,0);
+  const tumblerTotal=orders.reduce((a,o)=>a+(o.tumblerCnt||0),0);
+  const hourly={};for(let h=0;h<24;h++)hourly[h]={cnt:0,amount:0};orders.forEach(o=>{hourly[o.hour].cnt++;hourly[o.hour].amount+=o.total});
+  const mm={};orders.forEach(o=>o.items.forEach(i=>{if(!mm[i.name])mm[i.name]={qty:0,amount:0};mm[i.name].qty+=i.qty;mm[i.name].amount+=i.price*i.qty-(i.tumbler?TUMBLER_DISCOUNT:0)}));
+  return{totalSales,totalCups,orderCount:orders.length,cashTotal,transferTotal,tumblerTotal,hourly,menuRank:Object.entries(mm).map(([name,v])=>({name,...v})).sort((a,b)=>b.qty-a.qty)};
 }
 
 function render(){
   const total=getTotal(),cashVal=parseInt(state.cashInput)||0,change=cashVal-total,canCC=cashVal>=total&&total>0;
-  let html=`
-    <div class="header">
-      <h1>☕ COFFEE POS</h1>
-      <button class="admin-btn" onclick="state.showAdmin=true;state.adminDate=todayStr();state.adminTab='주문내역';render()">📊 관리자</button>
-    </div>
+  const syncDot=firebaseReady?'<span class="sync-dot online" title="클라우드 연결"></span>':'<span class="sync-dot offline" title="로컬 모드"></span>';
+  let html=`<div class="header"><h1>☕ COFFEE POS</h1><div class="header-right">${syncDot}<button class="admin-btn" onclick="openAdmin()">📊 관리자</button></div></div>
     <div class="tabs">${Object.keys(MENU).map(cat=>`<button class="tab ${state.tab===cat?'active':''}" onclick="state.tab='${cat}';render()">${cat}</button>`).join('')}</div>
-    <div class="menu-area">
-      <div class="cat-label">${state.tab}</div>
-      <div class="menu-grid">${MENU[state.tab].map(item=>{const q=getQty(item.name);return`<div class="menu-item ${q?'selected':''}" onclick='addToCart(${JSON.stringify(item)})'><div class="name">${item.name}</div><div class="price">${fmt(item.price)}원</div>${q?`<div class="badge">${q}</div>`:''}</div>`}).join('')}</div>
-    </div>
-    <div class="order-bar">
-      ${state.cart.length===0?`<div class="empty-order">메뉴를 선택해주세요</div>`:`
-        <div class="order-items">${state.cart.map((c,i)=>`<div class="order-line"><button class="ol-tumbler ${c.tumbler?'on':''}" onclick="toggleTumbler(${i})">🥤</button><span class="ol-name">${c.name}${c.tumbler?' <span class="tum-tag">텀블러</span>':''}</span><span class="ol-qty">×${c.qty}</span><span class="ol-price">${fmt(c.tumbler?c.price*c.qty-TUMBLER_DISCOUNT:c.price*c.qty)}원</span><button class="ol-remove" onclick="removeFromCart(${i})">✕</button></div>`).join('')}</div>
-        <div class="order-total"><span>합계</span><span class="amount">${fmt(total)}원</span></div>
-        ${hasTumbler()?`<div class="discount-note">🥤 텀블러 ${tumblerCount()}잔 × −${fmt(TUMBLER_DISCOUNT)}원 = −${fmt(tumblerCount()*TUMBLER_DISCOUNT)}원</div>`:''}`}
-      <button class="pay-btn" ${state.cart.length===0?'disabled':''} onclick="state.showPay=true;state.cashInput='';state.payMethod='현금';render()">결제하기</button>
-    </div>`;
+    <div class="menu-area"><div class="cat-label">${state.tab}</div><div class="menu-grid">${MENU[state.tab].map(item=>{const q=getQty(item.name);return`<div class="menu-item ${q?'selected':''}" onclick='addToCart(${JSON.stringify(item)})'><div class="name">${item.name}</div><div class="price">${fmt(item.price)}원</div>${q?`<div class="badge">${q}</div>`:''}</div>`}).join('')}</div></div>
+    <div class="order-bar">${state.cart.length===0?`<div class="empty-order">메뉴를 선택해주세요</div>`:`<div class="order-items">${state.cart.map((c,i)=>`<div class="order-line"><button class="ol-tumbler ${c.tumbler?'on':''}" onclick="toggleTumbler(${i})">🥤</button><span class="ol-name">${c.name}${c.tumbler?' <span class="tum-tag">텀블러</span>':''}</span><span class="ol-qty">×${c.qty}</span><span class="ol-price">${fmt(c.tumbler?c.price*c.qty-TUMBLER_DISCOUNT:c.price*c.qty)}원</span><button class="ol-remove" onclick="removeFromCart(${i})">✕</button></div>`).join('')}</div><div class="order-total"><span>합계</span><span class="amount">${fmt(total)}원</span></div>${hasTumbler()?`<div class="discount-note">🥤 텀블러 ${tumblerCount()}잔 × −${fmt(TUMBLER_DISCOUNT)}원 = −${fmt(tumblerCount()*TUMBLER_DISCOUNT)}원</div>`:''}`}<button class="pay-btn" ${state.cart.length===0?'disabled':''} onclick="state.showPay=true;state.cashInput='';state.payMethod='현금';render()">결제하기</button></div>`;
 
-  if(state.showPay){html+=`
-    <div class="modal-overlay" onclick="if(event.target===this){state.showPay=false;render()}"><div class="modal"><h2>결제</h2>
-      <div class="pay-methods"><button class="pay-method ${state.payMethod==='현금'?'active':''}" onclick="state.payMethod='현금';state.cashInput='';render()">💵 현금</button><button class="pay-method ${state.payMethod==='계좌이체'?'active':''}" onclick="state.payMethod='계좌이체';render()">🏦 계좌이체</button></div>
-      <div class="pay-summary">
-        ${state.cart.map(c=>`<div class="pay-row"><span>${c.name} ×${c.qty}${c.tumbler?' 🥤':''}</span><span>${fmt(c.tumbler?c.price*c.qty-TUMBLER_DISCOUNT:c.price*c.qty)}원</span></div>`).join('')}
-        ${hasTumbler()?`<div class="pay-row" style="color:var(--green)"><span>텀블러 할인 (${tumblerCount()}잔)</span><span>−${fmt(tumblerCount()*TUMBLER_DISCOUNT)}원</span></div>`:''}
-        <div class="pay-row total"><span>총 결제금액</span><span>${fmt(total)}원</span></div>
-        ${state.payMethod==='현금'&&state.cashInput?`<div class="pay-row change"><span>거스름돈</span><span>${change>=0?fmt(change)+'원':'부족'}</span></div>`:''}
-      </div>
-      ${state.payMethod==='현금'?`
-        <div class="cash-input-area"><label>받은 금액</label>
-          <div class="cash-display">${state.cashInput?fmt(parseInt(state.cashInput))+'원':'0원'}</div>
-          <div class="numpad">
-            <button class="quick" onclick="state.cashInput='${total}';render()">딱 맞게</button>
-            <button class="quick" onclick="state.cashInput='${Math.ceil(total/1000)*1000}';render()">${fmt(Math.ceil(total/1000)*1000)}</button>
-            <button class="quick" onclick="state.cashInput='${Math.ceil(total/5000)*5000}';render()">${fmt(Math.ceil(total/5000)*5000)}</button>
-            ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="state.cashInput+='${n}';render()">${n}</button>`).join('')}
-            <button class="clear" onclick="state.cashInput='';render()">C</button>
-            <button onclick="state.cashInput+='0';render()">0</button>
-            <button onclick="state.cashInput=state.cashInput.slice(0,-1);render()">⌫</button>
-          </div>
-        </div>
-        <button class="confirm-btn ${canCC?'ready':'not-ready'}" ${canCC?'':'disabled'} onclick="if(${canCC})completeOrder()">${canCC?'결제 완료':'금액을 입력하세요'}</button>
-      `:`<button class="confirm-btn transfer" onclick="completeOrder()">계좌이체 확인 완료</button>`}
-    </div></div>`}
+  if(state.showPay){html+=`<div class="modal-overlay" onclick="if(event.target===this){state.showPay=false;render()}"><div class="modal"><h2>결제</h2><div class="pay-methods"><button class="pay-method ${state.payMethod==='현금'?'active':''}" onclick="state.payMethod='현금';state.cashInput='';render()">💵 현금</button><button class="pay-method ${state.payMethod==='계좌이체'?'active':''}" onclick="state.payMethod='계좌이체';render()">🏦 계좌이체</button></div><div class="pay-summary">${state.cart.map(c=>`<div class="pay-row"><span>${c.name} ×${c.qty}${c.tumbler?' 🥤':''}</span><span>${fmt(c.tumbler?c.price*c.qty-TUMBLER_DISCOUNT:c.price*c.qty)}원</span></div>`).join('')}${hasTumbler()?`<div class="pay-row" style="color:var(--green)"><span>텀블러 할인 (${tumblerCount()}잔)</span><span>−${fmt(tumblerCount()*TUMBLER_DISCOUNT)}원</span></div>`:''}<div class="pay-row total"><span>총 결제금액</span><span>${fmt(total)}원</span></div>${state.payMethod==='현금'&&state.cashInput?`<div class="pay-row change" id="changeRow"><span>거스름돈</span><span>${change>=0?fmt(change)+'원':'부족'}</span></div>`:`<div class="pay-row change" id="changeRow"></div>`}</div>${state.payMethod==='현금'?`<div class="cash-input-area"><label>받은 금액</label><div class="cash-display" id="cashDisp">${state.cashInput?fmt(parseInt(state.cashInput))+'원':'0원'}</div><div class="numpad"><button class="quick" onclick="ci('${total}')">딱 맞게</button><button class="quick" onclick="ci('${Math.ceil(total/1000)*1000}')">${fmt(Math.ceil(total/1000)*1000)}</button><button class="quick" onclick="ci('${Math.ceil(total/5000)*5000}')">${fmt(Math.ceil(total/5000)*5000)}</button>${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="ci(state.cashInput+'${n}')">${n}</button>`).join('')}<button class="clear" onclick="ci('')">C</button><button onclick="ci(state.cashInput+'0')">0</button><button onclick="ci(state.cashInput.slice(0,-1))">⌫</button></div></div><button class="confirm-btn ${canCC?'ready':'not-ready'}" id="confirmBtn" ${canCC?'':'disabled'} onclick="if(${canCC})completeOrder()">${canCC?'결제 완료':'금액을 입력하세요'}</button>`:`<button class="confirm-btn transfer" onclick="completeOrder()">계좌이체 확인 완료</button>`}</div></div>`}
 
-  if(state.showBellPicker){html+=`
-    <div class="modal-overlay"><div class="modal" style="max-height:90dvh;display:flex;flex-direction:column">
-      <h2 style="flex-shrink:0">🔔 진동벨 번호 선택</h2>
-      <div class="bell-grid-wrap"><div class="bell-grid">${Array.from({length:99},(_,i)=>i+1).map(n=>`<button class="bell-cell" onclick="selectBell(${n})">${n}</button>`).join('')}</div></div>
-    </div></div>`}
+  if(state.showBellPicker){html+=`<div class="modal-overlay"><div class="modal" style="max-height:90dvh;display:flex;flex-direction:column"><h2 style="flex-shrink:0">🔔 진동벨 번호 선택</h2><div class="bell-grid-wrap"><div class="bell-grid">${Array.from({length:99},(_,i)=>i+1).map(n=>`<button class="bell-cell" onclick="selectBell(${n})">${n}</button>`).join('')}</div></div></div></div>`}
 
-  if(state.showReceipt&&state.lastOrder){const o=state.lastOrder;html+=`
-    <div class="modal-overlay"><div class="modal"><div class="receipt">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      <h2>주문 완료!</h2><div class="bell-big">#${String(o.bell).padStart(2,'0')}</div>
-      <div class="receipt-info">
-        ${o.items.map(c=>`${c.name} ×${c.qty}${c.tumbler?' 🥤':''}`).join(' / ')}<br>
-        ${o.tumblerCnt>0?`🥤 텀블러 ${o.tumblerCnt}잔 (${o.tumblerItems.map(c=>c.name).join(', ')}) −${fmt(o.tumblerCnt*TUMBLER_DISCOUNT)}원<br>`:''}
-        결제: <strong>${o.method}</strong><br>금액: <strong>${fmt(o.total)}원</strong>
-        ${o.method==='현금'?`<br>받은 금액: ${fmt(o.received)}원 → 거스름돈: <strong>${fmt(o.change)}원</strong>`:''}
-      </div>
-      <button class="done-btn" onclick="state.showReceipt=false;state.lastOrder=null;render()">다음 주문</button>
-    </div></div></div>`}
+  if(state.showReceipt&&state.lastOrder){const o=state.lastOrder;html+=`<div class="modal-overlay"><div class="modal"><div class="receipt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><h2>주문 완료!</h2><div class="bell-big">#${String(o.bell).padStart(2,'0')}</div><div class="receipt-info">${o.items.map(c=>`${c.name} ×${c.qty}${c.tumbler?' 🥤':''}`).join(' / ')}<br>${o.tumblerCnt>0?`🥤 텀블러 ${o.tumblerCnt}잔 (${o.tumblerItems.map(c=>c.name).join(', ')}) −${fmt(o.tumblerCnt*TUMBLER_DISCOUNT)}원<br>`:''}결제: <strong>${o.method}</strong><br>금액: <strong>${fmt(o.total)}원</strong>${o.method==='현금'?`<br>받은 금액: ${fmt(o.received)}원 → 거스름돈: <strong>${fmt(o.change)}원</strong>`:''}</div><button class="done-btn" onclick="state.showReceipt=false;state.lastOrder=null;render()">다음 주문</button></div></div></div>`}
 
-  // ===== ADMIN PANEL =====
-  if(state.showAdmin){
-    const orders=getOrdersForDate(state.adminDate),st=calcStats(orders);
-    const maxH=Math.max(...Object.values(st.hourly).map(h=>h.amount),1);
-    html+=`
-    <div class="modal-overlay" style="align-items:stretch"><div class="modal full">
-      <div class="admin-header"><h2>📊 매출 관리</h2><button class="admin-close" onclick="state.showAdmin=false;render()">✕</button></div>
-      <div class="admin-date">
-        <button onclick="shiftAdminDate(-1)">◀</button>
-        <span>${dateLabel(state.adminDate)}${state.adminDate===todayStr()?' (오늘)':''}</span>
-        <button onclick="shiftAdminDate(1)" ${state.adminDate>=todayStr()?'disabled style="opacity:.3"':''}>▶</button>
-      </div>
-      <div class="summary-cards">
-        <div class="s-card"><div class="s-label">총 매출</div><div class="s-value">${fmt(st.totalSales)}원</div><div class="s-sub">${st.orderCount}건</div></div>
-        <div class="s-card"><div class="s-label">총 잔수</div><div class="s-value">${st.totalCups}잔</div><div class="s-sub">텀블러 ${st.tumblerTotal}건</div></div>
-        <div class="s-card"><div class="s-label">💵 현금</div><div class="s-value" style="font-size:16px">${fmt(st.cashTotal)}원</div></div>
-        <div class="s-card"><div class="s-label">🏦 계좌이체</div><div class="s-value" style="font-size:16px">${fmt(st.transferTotal)}원</div></div>
-      </div>
+  if(state.showAdmin){const orders=state.adminOrders||[],st=calcStats(orders),maxH=Math.max(...Object.values(st.hourly).map(h=>h.amount),1);
+    html+=`<div class="modal-overlay" style="align-items:stretch"><div class="modal full"><div class="admin-header"><h2>📊 매출 관리 ${firebaseReady?'<span style="font-size:11px;color:var(--green)">☁️ 클라우드</span>':'<span style="font-size:11px;color:var(--text3)">📱 로컬</span>'}</h2><button class="admin-close" onclick="state.showAdmin=false;render()">✕</button></div>
+      <div class="admin-date"><button onclick="shiftAdminDate(-1)">◀</button><span>${dateLabel(state.adminDate)}${state.adminDate===todayStr()?' (오늘)':''}</span><button onclick="shiftAdminDate(1)" ${state.adminDate>=todayStr()?'disabled style="opacity:.3"':''}>▶</button></div>
+      <div class="summary-cards"><div class="s-card"><div class="s-label">총 매출</div><div class="s-value">${fmt(st.totalSales)}원</div><div class="s-sub">${st.orderCount}건</div></div><div class="s-card"><div class="s-label">총 잔수</div><div class="s-value">${st.totalCups}잔</div><div class="s-sub">텀블러 ${st.tumblerTotal}건</div></div><div class="s-card"><div class="s-label">💵 현금</div><div class="s-value" style="font-size:16px">${fmt(st.cashTotal)}원</div></div><div class="s-card"><div class="s-label">🏦 계좌이체</div><div class="s-value" style="font-size:16px">${fmt(st.transferTotal)}원</div></div></div>
       <div class="admin-tabs">${['주문내역','시간대별','메뉴별'].map(t=>`<button class="admin-tab ${state.adminTab===t?'active':''}" onclick="state.adminTab='${t}';render()">${t}</button>`).join('')}</div>
-      <div class="admin-body">
-      ${state.adminTab==='주문내역'?(orders.length===0?'<div class="no-data">주문 내역이 없습니다.</div>':`${[...orders].reverse().map(o=>`<div class="hist-item"><div class="hist-top"><span class="hist-bell">🔔 #${String(o.bell).padStart(2,'0')}</span><span class="hist-time">${o.time}</span></div><div class="hist-items">${o.items.map(i=>`${i.name} ×${i.qty}${i.tumbler?' 🥤':''}`).join(', ')}</div>${o.tumblerCnt>0?`<div class="hist-tumbler">🥤 텀블러 ${o.tumblerCnt}잔 −${fmt(o.tumblerCnt*TUMBLER_DISCOUNT)}원</div>`:''}<div class="hist-bottom"><span class="hist-method">${o.method==='현금'?'💵':'🏦'} ${o.method}</span><span class="hist-total">${fmt(o.total)}원</span></div></div>`).join('')}`):''}
-      ${state.adminTab==='시간대별'?(orders.length===0?'<div class="no-data">데이터가 없습니다.</div>':`${Object.entries(st.hourly).filter(([,v])=>v.cnt>0).map(([h,v])=>`<div class="hour-row"><span class="hour-label">${String(h).padStart(2,'0')}시</span><div class="hour-bar-wrap"><div class="hour-bar" style="width:${(v.amount/maxH*100).toFixed(1)}%"></div></div><span class="hour-cnt">${v.cnt}건</span><span class="hour-val">${fmt(v.amount)}원</span></div>`).join('')}`):''}
-      ${state.adminTab==='메뉴별'?(st.menuRank.length===0?'<div class="no-data">데이터가 없습니다.</div>':`${st.menuRank.map((m,i)=>`<div class="rank-row"><span class="rank-num">${i+1}</span><span class="rank-name">${m.name}</span><span class="rank-qty">${m.qty}잔</span><span class="rank-amount">${fmt(m.amount)}원</span></div>`).join('')}`):''}
-      </div>
-    </div></div>`;
-  }
+      <div class="admin-body">${state.adminLoading?'<div class="loading">데이터 불러오는 중...</div>':state.adminTab==='주문내역'?(orders.length===0?'<div class="no-data">주문 내역이 없습니다.</div>':`${[...orders].sort((a,b)=>b.time>a.time?1:-1).map(o=>`<div class="hist-item"><div class="hist-top"><span class="hist-bell">🔔 #${String(o.bell).padStart(2,'0')}</span><span class="hist-time">${o.time}</span></div><div class="hist-items">${o.items.map(i=>`${i.name} ×${i.qty}${i.tumbler?' 🥤':''}`).join(', ')}</div>${(o.tumblerCnt||0)>0?`<div class="hist-tumbler">🥤 텀블러 ${o.tumblerCnt}잔 −${fmt(o.tumblerCnt*TUMBLER_DISCOUNT)}원</div>`:''}<div class="hist-bottom"><span class="hist-method">${o.method==='현금'?'💵':'🏦'} ${o.method}</span><span class="hist-total">${fmt(o.total)}원</span></div></div>`).join('')}`):state.adminTab==='시간대별'?(orders.length===0?'<div class="no-data">데이터가 없습니다.</div>':`${Object.entries(st.hourly).filter(([,v])=>v.cnt>0).map(([h,v])=>`<div class="hour-row"><span class="hour-label">${String(h).padStart(2,'0')}시</span><div class="hour-bar-wrap"><div class="hour-bar" style="width:${(v.amount/maxH*100).toFixed(1)}%"></div></div><span class="hour-cnt">${v.cnt}건</span><span class="hour-val">${fmt(v.amount)}원</span></div>`).join('')}`):state.adminTab==='메뉴별'?(st.menuRank.length===0?'<div class="no-data">데이터가 없습니다.</div>':`${st.menuRank.map((m,i)=>`<div class="rank-row"><span class="rank-num">${i+1}</span><span class="rank-name">${m.name}</span><span class="rank-qty">${m.qty}잔</span><span class="rank-amount">${fmt(m.amount)}원</span></div>`).join('')}`):''}</div>
+    </div></div>`}
 
   document.getElementById('app').innerHTML=html;
 }
